@@ -1,0 +1,60 @@
+name: Deploy to Eino
+
+on:
+  workflow_dispatch: # 手动触发
+    inputs:
+      service:
+        description: "select the service to deploy"
+        required: true
+        type: choice
+        options:
+          - host
+          - mcp_local
+          - mcp_remote
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: eino-deploy
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v6-beta # 检出后，代码就在 $GITHUB_WORKSPACE 里
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          # 自动从 go.mod 读取版本
+          go-version-file: 'go.mod'
+          cache: true
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and Push Docker Image
+        working-directory: ${{ github.workspace }}
+        run: make push-cd-${{ github.event.inputs.service }}
+  deploy:
+    runs-on: ubuntu-latest
+    environment: eino-deploy
+    needs: build  # 确保在 build 作业完成后再执行
+
+    concurrency:
+      group: global-deployment-workflow
+      cancel-in-progress: false # 后续的 workflow 处于 pending
+
+    steps:
+      - name: SSH and deploy on server
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          port: ${{ secrets.SERVER_PORT }}
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /root/go-mcp-demo
+            git pull -f
+            make pull-run-${{ github.event.inputs.service }}

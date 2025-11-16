@@ -47,6 +47,8 @@ dumped_hertz_remote_config.json
 /config/config.yaml.bak
 /config/config.stdio.yaml
 /config/config.stdio.yaml.bak
+/config/config.docker.yaml
+/config/config.docker.yaml.bak
 /k8s/config/configmap.yaml
 **/coverage.txt
 **/coverage.out
@@ -56,5 +58,4 @@ ca-key
 /bin
 /log
 /node_modules
-.DS_Store
 **/vendor/

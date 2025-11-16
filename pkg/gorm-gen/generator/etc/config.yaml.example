@@ -1,0 +1,5 @@
+host: "127.0.0.1"
+port: 5432
+database: "go-mcp-demo"
+user: "go-mcp-demo"
+password: "go-mcp-demo"

@@ -1,0 +1,39 @@
+version: "3.9"
+
+services:
+  consul:
+    image: hashicorp/consul:1.19.0
+    container_name: consul
+    restart: always
+    command: >
+      agent
+      -server
+      -bootstrap-expect=1
+      -ui
+      -client=0.0.0.0
+      -bind=0.0.0.0
+      -data-dir=/consul/data
+    ports:
+      - "8500:8500"  # Web UI / HTTP API
+      - "8600:8600/udp" # DNS
+      - "8600:8600/tcp"
+    volumes:
+      - ./data/consul/data:/consul/data
+    networks:
+      - mcp_net  # 加入自定义网络
+  postgres:
+    image: m.daocloud.io/docker.io/bitnami/postgresql:latest
+    container_name: mcp-postgres
+    ports:
+        - "5432:5432"
+    env_file:
+      - ./env/postgres.env
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data/
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+        - mcp_net
+
+networks:
+  mcp_net:
+    driver: bridge  # 使用桥接网络
